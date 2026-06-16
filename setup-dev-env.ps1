@@ -238,28 +238,11 @@ if (-not $wtSettingsPath) {
             $settings.profiles | Add-Member -NotePropertyName "defaults" -NotePropertyValue ([PSCustomObject]@{})
         }
 
-        $defaults = $settings.profiles.defaults
-
-        # Font
-        $fontObj = [PSCustomObject]@{ face = "Hack Nerd Font Mono" }
-        if ($defaults.PSObject.Properties.Match("font")) {
-            $defaults.font | Add-Member -NotePropertyName "face" -NotePropertyValue "Hack Nerd Font Mono" -Force
-        } else {
-            $defaults | Add-Member -NotePropertyName "font" -NotePropertyValue $fontObj -Force
-        }
-
-        # Font size
-        if ($defaults.font.PSObject.Properties.Match("size")) {
-            $defaults.font.size = 18
-        } else {
-            $defaults.font | Add-Member -NotePropertyName "size" -NotePropertyValue 18 -Force
-        }
-
-        # Color scheme
-        if ($defaults.PSObject.Properties.Match("colorScheme")) {
-            $defaults.colorScheme = "Tokyo Night"
-        } else {
-            $defaults | Add-Member -NotePropertyName "colorScheme" -NotePropertyValue "Tokyo Night" -Force
+        # Set font + colorScheme on defaults (overwrite cleanly)
+        $fontSetting = [PSCustomObject]@{ face = "Hack Nerd Font Mono"; size = 18 }
+        $settings.profiles.defaults = [PSCustomObject]@{
+            font        = $fontSetting
+            colorScheme = "Tokyo Night"
         }
         Write-Ok "Set profile defaults: Hack Nerd Font Mono, size 18, Tokyo Night"
 
