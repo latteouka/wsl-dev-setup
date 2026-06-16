@@ -75,20 +75,10 @@ try {
 if ($ubuntuReady) {
     Write-Ok "WSL + Ubuntu already installed and ready"
 } else {
-    # Not ready — install WSL + Ubuntu (one command does everything on modern Windows)
     Write-Step "Installing WSL + Ubuntu (this may take a few minutes)..."
-    Write-Host ""
-    Write-Host "  After installation, Ubuntu will open in a new window." -ForegroundColor Yellow
-    Write-Host "  Create your username and password there, then type 'exit'." -ForegroundColor Yellow
-    Write-Host "  Then come back here and press Enter." -ForegroundColor Yellow
-    Write-Host ""
-
     wsl --install -d Ubuntu
 
-    Write-Host ""
-    Read-Host "  Press Enter after creating your Ubuntu account"
-
-    # Verify
+    # Check if reboot is required (some Windows versions need it)
     $ubuntuReady = $false
     try {
         $testOutput = wsl -d Ubuntu -- echo "WSL_READY" 2>&1
@@ -98,16 +88,29 @@ if ($ubuntuReady) {
     } catch {}
 
     if (-not $ubuntuReady) {
-        Write-Err "Cannot communicate with Ubuntu after install."
+        # WSL installed but not functional yet — needs reboot
+        Write-Warn "WSL needs a reboot to finish installation."
         Write-Host ""
-        Write-Host "  If Ubuntu didn't open automatically:" -ForegroundColor Yellow
-        Write-Host "    1. Open Start Menu -> search 'Ubuntu' -> open it" -ForegroundColor Yellow
-        Write-Host "    2. Create username and password" -ForegroundColor Yellow
-        Write-Host "    3. Type 'exit'" -ForegroundColor Yellow
-        Write-Host "    4. Re-run this script" -ForegroundColor Yellow
+
+        $desktopPath = [Environment]::GetFolderPath("Desktop")
+        $continueScript = Join-Path $desktopPath "continue-setup.cmd"
+        $selfPath = $MyInvocation.MyCommand.Definition
+
+        @"
+@echo off
+echo Resuming WSL Dev Environment Setup...
+powershell.exe -NoProfile -ExecutionPolicy Bypass -File "$selfPath"
+pause
+"@ | Set-Content -Path $continueScript -Encoding ASCII
+
+        Write-Ok "Created 'continue-setup.cmd' on your Desktop."
+        Write-Host ""
+        Write-Host "  Please:" -ForegroundColor Yellow
+        Write-Host "    1. Reboot your computer" -ForegroundColor Yellow
+        Write-Host "    2. Double-click 'continue-setup.cmd' on your Desktop" -ForegroundColor Yellow
         Write-Host ""
         Read-Host "  Press Enter to exit"
-        exit 1
+        exit 0
     }
 
     Write-Ok "WSL + Ubuntu installed and ready"
