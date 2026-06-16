@@ -97,7 +97,11 @@ sudo apt-get install -y \
     fish tmux neovim git curl wget unzip \
     eza fd-find ripgrep fzf \
     tree htop jq bat \
-    build-essential
+    build-essential locales
+
+# Generate en_US.UTF-8 locale (neovim needs it)
+sudo locale-gen en_US.UTF-8
+sudo update-locale LANG=en_US.UTF-8
 
 success "apt packages installed"
 
