@@ -247,6 +247,8 @@ if (-not $wtSettingsPath) {
         Write-Ok "Set profile defaults: Hack Nerd Font Mono, size 18, Tokyo Night"
 
         # ── Set default profile to WSL Ubuntu ──
+        $ubuntuGuid = "{2c4de342-38b7-51cf-b940-2309a097f518}"
+
         $ubuntuProfile = $null
         if ($settings.profiles.PSObject.Properties.Match("list")) {
             foreach ($prof in $settings.profiles.list) {
@@ -259,16 +261,23 @@ if (-not $wtSettingsPath) {
             }
         }
 
-        if ($ubuntuProfile) {
-            try {
-                $settings.defaultProfile = $ubuntuProfile.guid
-                Write-Ok "Set default profile to Ubuntu (GUID: $($ubuntuProfile.guid))"
-            } catch {
-                Write-Warn "Ubuntu profile found but has no GUID. Default profile unchanged."
+        if (-not $ubuntuProfile) {
+            # Terminal hasn't discovered Ubuntu yet — add profile manually
+            $newProfile = [PSCustomObject]@{
+                guid        = $ubuntuGuid
+                name        = "Ubuntu"
+                commandline = "wsl.exe -d Ubuntu"
+                hidden      = $false
             }
-        } else {
-            Write-Warn "Could not find Ubuntu profile in Windows Terminal. Default profile unchanged."
+            $profileList = [System.Collections.ArrayList]@($settings.profiles.list)
+            $profileList.Add($newProfile) | Out-Null
+            $settings.profiles.list = @($profileList)
+            $ubuntuProfile = $newProfile
+            Write-Ok "Added Ubuntu profile to Windows Terminal"
         }
+
+        $settings.defaultProfile = $ubuntuProfile.guid
+        Write-Ok "Set default profile to Ubuntu"
 
         # ── Write back ──
         $settings | ConvertTo-Json -Depth 20 | Set-Content -Path $wtSettingsPath -Encoding UTF8
