@@ -140,9 +140,10 @@ if [ -x "$FISH_PATH" ]; then
     "$FISH_PATH" -c 'fisher update'
     success "fisher plugins installed"
 
-    # Configure tide: single-line prompt (remove newline between pwd and character)
+    # Configure tide: single-line, no extra blank line before prompt
     "$FISH_PATH" -c 'set -U tide_left_prompt_items os context pwd git character'
-    success "tide configured (single-line prompt)"
+    "$FISH_PATH" -c 'set -U tide_prompt_add_newline_before false'
+    success "tide configured (single-line, compact)"
 fi
 
 # ─── 5. Tmux config ──────────────────────────────────────────────────────────
