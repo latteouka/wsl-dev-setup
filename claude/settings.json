@@ -24,7 +24,20 @@
     "playwright@claude-plugins-official": true,
     "code-simplifier@claude-plugins-official": true,
     "pyright-lsp@claude-plugins-official": true,
-    "superpowers@claude-plugins-official": true
+    "superpowers@claude-plugins-official": true,
+    "claude-hud@claude-hud": true
+  },
+  "extraKnownMarketplaces": {
+    "claude-hud": {
+      "source": {
+        "source": "github",
+        "repo": "jarrodwatts/claude-hud"
+      }
+    }
+  },
+  "statusLine": {
+    "type": "command",
+    "command": "bash -c 'plugin_dir=$(ls -d \"$HOME\"/.claude/plugins/cache/claude-hud/claude-hud/*/ 2>/dev/null | sort -V | tail -1); [ -d \"$plugin_dir\" ] && node \"${plugin_dir}dist/index.js\"'"
   },
   "effortLevel": "xhigh",
   "tui": "fullscreen",
