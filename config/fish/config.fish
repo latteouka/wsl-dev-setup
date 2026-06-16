@@ -62,6 +62,7 @@ alias v nvim
 alias vr "nvim -R"
 alias p pnpm
 alias d docker
+alias bat batcat
 alias c clear
 alias k kubectl
 
