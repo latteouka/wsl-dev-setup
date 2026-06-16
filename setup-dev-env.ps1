@@ -73,34 +73,25 @@ try {
     $wslInstalled = $false
 }
 
-$justInstalledWSL = $false
+# If WSL not installed at all, install it (enables WSL feature + may need reboot)
 if (-not $wslInstalled) {
-    Write-Step "Installing WSL with Ubuntu..."
-    $justInstalledWSL = $true
+    Write-Step "Installing WSL..."
     try {
-        wsl --install -d Ubuntu
+        wsl --install --no-distribution
     } catch {
         Write-Err "WSL install command failed: $_"
-        Write-Warn "You may need to enable the 'Windows Subsystem for Linux' feature manually."
         exit 1
     }
-}
 
-# Test if WSL is actually ready (not just installed)
-$wslReady = $false
-try {
-    $testOutput = wsl -d Ubuntu -- echo "WSL_READY" 2>&1
-    if ($testOutput -match "WSL_READY") {
-        $wslReady = $true
-    }
-} catch {
+    # Check if reboot is needed
     $wslReady = $false
-}
+    try {
+        $testOutput = wsl --status 2>&1
+        if ($LASTEXITCODE -eq 0) { $wslReady = $true }
+    } catch {}
 
-if (-not $wslReady) {
-    if ($justInstalledWSL) {
-        # Case 1: WSL was just installed — likely needs a reboot
-        Write-Warn "WSL was just installed and needs a reboot to finish."
+    if (-not $wslReady) {
+        Write-Warn "WSL was just enabled and needs a reboot."
 
         $desktopPath = [Environment]::GetFolderPath("Desktop")
         $continueScript = Join-Path $desktopPath "continue-setup.cmd"
@@ -121,37 +112,61 @@ pause
         Write-Host ""
         Read-Host "  Press Enter to exit"
         exit 0
-    } else {
-        # Case 2: WSL is installed but Ubuntu needs first-time user setup
-        Write-Warn "WSL is installed but Ubuntu needs initial setup (create a user account)."
-        Write-Host ""
-        Write-Host "  Please:" -ForegroundColor Yellow
-        Write-Host "    1. Open Start Menu -> search 'Ubuntu' -> click to open" -ForegroundColor Yellow
-        Write-Host "    2. Create a username and password when prompted" -ForegroundColor Yellow
-        Write-Host "    3. Type 'exit' to close Ubuntu" -ForegroundColor Yellow
-        Write-Host "    4. Come back here and press Enter to continue" -ForegroundColor Yellow
-        Write-Host ""
-        Read-Host "  Press Enter after completing Ubuntu setup"
-
-        # Re-test after user completes Ubuntu setup
-        $wslReady = $false
-        try {
-            $testOutput = wsl -d Ubuntu -- echo "WSL_READY" 2>&1
-            if ($testOutput -match "WSL_READY") {
-                $wslReady = $true
-            }
-        } catch {}
-
-        if (-not $wslReady) {
-            Write-Err "WSL still not responding. Please complete Ubuntu setup manually, then re-run this script."
-            Read-Host "  Press Enter to exit"
-            exit 1
-        }
-        Write-Ok "Ubuntu is ready"
     }
-} else {
-    Write-Ok "WSL is installed and ready"
+    Write-Ok "WSL enabled"
 }
+
+# Check if Ubuntu distro is installed
+Write-Step "Checking Ubuntu distro..."
+
+$ubuntuInstalled = $false
+$distroList = wsl --list --quiet 2>&1
+if ($distroList -match "Ubuntu") {
+    $ubuntuInstalled = $true
+}
+
+if (-not $ubuntuInstalled) {
+    Write-Step "Installing Ubuntu distro (this may take a few minutes)..."
+    wsl --install -d Ubuntu --no-launch
+    Write-Ok "Ubuntu distro installed"
+}
+
+# Check if Ubuntu is ready (has a user account)
+$wslReady = $false
+try {
+    $testOutput = wsl -d Ubuntu -- echo "WSL_READY" 2>&1
+    if ($testOutput -match "WSL_READY") {
+        $wslReady = $true
+    }
+} catch {}
+
+if (-not $wslReady) {
+    Write-Warn "Ubuntu needs initial setup (create a user account)."
+    Write-Host ""
+    Write-Host "  Please:" -ForegroundColor Yellow
+    Write-Host "    1. Open Start Menu -> search 'Ubuntu' -> click to open" -ForegroundColor Yellow
+    Write-Host "    2. Create a username and password when prompted" -ForegroundColor Yellow
+    Write-Host "    3. Type 'exit' to close Ubuntu" -ForegroundColor Yellow
+    Write-Host "    4. Come back here and press Enter to continue" -ForegroundColor Yellow
+    Write-Host ""
+    Read-Host "  Press Enter after completing Ubuntu setup"
+
+    # Re-test
+    try {
+        $testOutput = wsl -d Ubuntu -- echo "WSL_READY" 2>&1
+        if ($testOutput -match "WSL_READY") {
+            $wslReady = $true
+        }
+    } catch {}
+
+    if (-not $wslReady) {
+        Write-Err "Ubuntu still not responding. Please re-run this script after completing Ubuntu setup."
+        Read-Host "  Press Enter to exit"
+        exit 1
+    }
+}
+
+Write-Ok "WSL + Ubuntu ready"
 
 # ─── 3. Install Hack Nerd Font ───────────────────────────────────────────────
 
