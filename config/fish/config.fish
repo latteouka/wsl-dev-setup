@@ -76,3 +76,9 @@ set -gx PATH /usr/local/bin $PATH
 # Claude Code
 alias cl "claude --dangerously-skip-permissions"
 alias clr "claude --dangerously-skip-permissions --resume"
+
+# 自動進入 tmux（如果不在 tmux 內且是互動 shell）
+if status is-interactive
+    and not set -q TMUX
+    tmux new-session -A -s main
+end
