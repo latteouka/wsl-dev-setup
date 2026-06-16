@@ -139,6 +139,10 @@ if [ -x "$FISH_PATH" ]; then
     success "Installing fisher plugins (tide, z, nvm, etc.)..."
     "$FISH_PATH" -c 'fisher update'
     success "fisher plugins installed"
+
+    # Configure tide: single-line prompt (remove newline between pwd and character)
+    "$FISH_PATH" -c 'set -U tide_left_prompt_items os context pwd git character'
+    success "tide configured (single-line prompt)"
 fi
 
 # ─── 5. Tmux config ──────────────────────────────────────────────────────────
