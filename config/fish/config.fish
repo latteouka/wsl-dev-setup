@@ -39,16 +39,6 @@ set -g fish_color_escape yellow
 set -g fish_color_autosuggestion brblack
 set -g fish_color_valid_path --underline
 
-# Fisher 自動安裝與插件同步
-if not functions -q fisher
-    and not set -q __fisher_installing
-    set -g __fisher_installing 1
-    echo "Installing fisher + plugins (one-time setup)..."
-    curl -sL https://raw.githubusercontent.com/jorgebucaran/fisher/main/functions/fisher.fish | source
-    fisher update
-    set -e __fisher_installing
-end
-
 # aliases
 alias ls "eza --icons"
 alias la "eza -A"

@@ -128,6 +128,17 @@ backup_file "$HOME/.config/fish/fish_plugins"
 cp "$REPO_DIR/config/fish/fish_plugins" "$HOME/.config/fish/fish_plugins"
 success "fish_plugins installed"
 
+# Install fisher + plugins (do it here, not in config.fish, to avoid reload loops)
+FISH_PATH="$(which fish)"
+if [ -x "$FISH_PATH" ]; then
+    success "Installing fisher + plugins..."
+    "$FISH_PATH" -c '
+        curl -sL https://raw.githubusercontent.com/jorgebucaran/fisher/main/functions/fisher.fish | source
+        fisher update
+    '
+    success "fisher + plugins installed"
+fi
+
 # ─── 5. Tmux config ──────────────────────────────────────────────────────────
 
 header "Tmux config"
