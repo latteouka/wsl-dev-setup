@@ -73,8 +73,10 @@ try {
     $wslInstalled = $false
 }
 
+$justInstalledWSL = $false
 if (-not $wslInstalled) {
     Write-Step "Installing WSL with Ubuntu..."
+    $justInstalledWSL = $true
     try {
         wsl --install -d Ubuntu
     } catch {
@@ -96,28 +98,57 @@ try {
 }
 
 if (-not $wslReady) {
-    Write-Warn "WSL is installed but requires a reboot to finish setup."
+    if ($justInstalledWSL) {
+        # Case 1: WSL was just installed — likely needs a reboot
+        Write-Warn "WSL was just installed and needs a reboot to finish."
 
-    # Create continue-setup.cmd on Desktop
-    $desktopPath = [Environment]::GetFolderPath("Desktop")
-    $continueScript = Join-Path $desktopPath "continue-setup.cmd"
-    $selfPath = $MyInvocation.MyCommand.Definition
+        $desktopPath = [Environment]::GetFolderPath("Desktop")
+        $continueScript = Join-Path $desktopPath "continue-setup.cmd"
+        $selfPath = $MyInvocation.MyCommand.Definition
 
-    @"
+        @"
 @echo off
 echo Resuming WSL Dev Environment Setup...
 powershell.exe -NoProfile -ExecutionPolicy Bypass -File "$selfPath"
 pause
 "@ | Set-Content -Path $continueScript -Encoding ASCII
 
-    Write-Ok "Created 'continue-setup.cmd' on your Desktop."
-    Write-Host ""
-    Write-Host "  Please:" -ForegroundColor Yellow
-    Write-Host "    1. Reboot your computer" -ForegroundColor Yellow
-    Write-Host "    2. Double-click 'continue-setup.cmd' on your Desktop" -ForegroundColor Yellow
-    Write-Host ""
-    Read-Host "  Press Enter to exit"
-    exit 0
+        Write-Ok "Created 'continue-setup.cmd' on your Desktop."
+        Write-Host ""
+        Write-Host "  Please:" -ForegroundColor Yellow
+        Write-Host "    1. Reboot your computer" -ForegroundColor Yellow
+        Write-Host "    2. Double-click 'continue-setup.cmd' on your Desktop" -ForegroundColor Yellow
+        Write-Host ""
+        Read-Host "  Press Enter to exit"
+        exit 0
+    } else {
+        # Case 2: WSL is installed but Ubuntu needs first-time user setup
+        Write-Warn "WSL is installed but Ubuntu needs initial setup (create a user account)."
+        Write-Host ""
+        Write-Host "  Please:" -ForegroundColor Yellow
+        Write-Host "    1. Open Start Menu -> search 'Ubuntu' -> click to open" -ForegroundColor Yellow
+        Write-Host "    2. Create a username and password when prompted" -ForegroundColor Yellow
+        Write-Host "    3. Type 'exit' to close Ubuntu" -ForegroundColor Yellow
+        Write-Host "    4. Come back here and press Enter to continue" -ForegroundColor Yellow
+        Write-Host ""
+        Read-Host "  Press Enter after completing Ubuntu setup"
+
+        # Re-test after user completes Ubuntu setup
+        $wslReady = $false
+        try {
+            $testOutput = wsl echo "WSL_READY" 2>&1
+            if ($testOutput -match "WSL_READY") {
+                $wslReady = $true
+            }
+        } catch {}
+
+        if (-not $wslReady) {
+            Write-Err "WSL still not responding. Please complete Ubuntu setup manually, then re-run this script."
+            Read-Host "  Press Enter to exit"
+            exit 1
+        }
+        Write-Ok "Ubuntu is ready"
+    }
 } else {
     Write-Ok "WSL is installed and ready"
 }
