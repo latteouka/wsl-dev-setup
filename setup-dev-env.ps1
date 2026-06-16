@@ -247,18 +247,27 @@ if (-not $wtSettingsPath) {
         Write-Ok "Set profile defaults: Hack Nerd Font Mono, size 18, Tokyo Night"
 
         # ── Set default profile to WSL Ubuntu ──
+        $ubuntuProfile = $null
         if ($settings.profiles.PSObject.Properties.Match("list")) {
-            $ubuntuProfile = $settings.profiles.list | Where-Object {
-                ($_.PSObject.Properties.Match("name") -and $_.name -match "Ubuntu") -or
-                ($_.PSObject.Properties.Match("source") -and $_.source -eq "Windows.Terminal.Wsl")
-            } | Select-Object -First 1
+            foreach ($prof in $settings.profiles.list) {
+                try {
+                    if ($prof.name -match "Ubuntu") {
+                        $ubuntuProfile = $prof
+                        break
+                    }
+                } catch {}
+            }
+        }
 
-            if ($ubuntuProfile -and $ubuntuProfile.guid) {
+        if ($ubuntuProfile) {
+            try {
                 $settings.defaultProfile = $ubuntuProfile.guid
                 Write-Ok "Set default profile to Ubuntu (GUID: $($ubuntuProfile.guid))"
-            } else {
-                Write-Warn "Could not find Ubuntu profile in Windows Terminal. Default profile unchanged."
+            } catch {
+                Write-Warn "Ubuntu profile found but has no GUID. Default profile unchanged."
             }
+        } else {
+            Write-Warn "Could not find Ubuntu profile in Windows Terminal. Default profile unchanged."
         }
 
         # ── Write back ──
@@ -305,7 +314,9 @@ try {
 
 Write-Step "Launching Phase 2 (WSL-side setup)..."
 
-$phase2Cmd = "curl -fsSL https://raw.githubusercontent.com/latteouka/wsl-dev-setup/main/setup-wsl.sh | bash"
+# Download first, then execute — curl|bash breaks interactive prompts (stdin conflict)
+$phase2Url = "https://raw.githubusercontent.com/latteouka/wsl-dev-setup/main/setup-wsl.sh"
+$phase2Cmd = "curl -fsSL '$phase2Url' -o /tmp/wsl-setup.sh && bash /tmp/wsl-setup.sh"
 
 Write-Host ""
 Write-Host "  ── Entering WSL (Phase 2) ──" -ForegroundColor Cyan
