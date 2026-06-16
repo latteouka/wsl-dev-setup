@@ -12,7 +12,7 @@
       6. Run Phase 2 (setup-wsl.sh) inside WSL
 
     Usage (paste into PowerShell as Admin):
-      iwr -useb https://raw.githubusercontent.com/latteouka/wsl-dev-setup/main/setup-dev-env.ps1 -OutFile setup.ps1; powershell -ExecutionPolicy Bypass -File setup.ps1
+      iwr -useb https://raw.githubusercontent.com/latteouka/wsl-dev-setup/main/setup-dev-env.ps1 -OutFile $HOME\setup.ps1; powershell -ExecutionPolicy Bypass -File $HOME\setup.ps1
 #>
 
 Set-StrictMode -Version Latest
