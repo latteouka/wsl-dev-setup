@@ -1,0 +1,326 @@
+/* ============================================================
+ * pdf skill — vivliostyle theme
+ * 對應 vivliostyle-cli v10+（Chromium/Vivliostyle.js 引擎）
+ * 為繁體中文技術文件 / 標案材料設計的 A4 列印樣式
+ * ============================================================
+ * 分層：
+ *   1. Paged Media（@page / 頁碼 / 運行頁眉 / margin box）
+ *   2. Typography（CJK / emoji font stack / 字級 / 行高）
+ *   3. Break control（跨頁控制 / widows-orphans）
+ *   4. Components（heading / table / code / blockquote / link / list / hr）
+ * ============================================================ */
+
+
+/* ---------- 1. Paged Media ---------- */
+
+@page {
+  size: A4;
+  margin: 18mm 20mm 18mm 20mm;
+
+  /* 頁尾中央：頁碼 X / Y */
+  @bottom-center {
+    content: counter(page) " / " counter(pages);
+    font-family: "PingFang TC", "Noto Sans CJK TC", sans-serif;
+    font-size: 9pt;
+    color: #666;
+  }
+
+  /* 頁首右側：當前章節名稱（由 h1 string-set 注入） */
+  @top-right {
+    content: string(chapter-title);
+    font-family: "PingFang TC", "Noto Sans CJK TC", sans-serif;
+    font-size: 9pt;
+    color: #888;
+  }
+}
+
+/* 首頁不顯示頁眉（封面感） */
+@page :first {
+  @top-right {
+    content: normal;
+  }
+}
+
+
+/* ---------- 2. Typography ---------- */
+
+/* Font stack 順序極其重要：
+ *   - Emoji fonts 放在前面，確保 Chromium 遇到 emoji codepoint 時
+ *     優先挑 color emoji 字型而非 monochrome fallback
+ *   - CJK 字型緊跟其後覆蓋中文字
+ *   - Latin 字型放最後
+ */
+:root {
+  --font-sans:
+    "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji",
+    "PingFang TC", "Noto Sans CJK TC", "Microsoft JhengHei", "Heiti TC",
+    -apple-system, "Helvetica Neue", Arial, sans-serif;
+
+  --font-mono:
+    "SF Mono", "Menlo", "Monaco", "Consolas",
+    "PingFang TC", "Noto Sans CJK TC", monospace;
+
+  --color-text: #1a1a1a;
+  --color-muted: #555;
+  --color-border: #d0d0d0;
+  --color-border-light: #e5e5e5;
+  --color-bg-subtle: #f7f7f7;
+  --color-bg-code: #f0f0f0;
+  --color-accent: #1e5aa8;
+}
+
+html {
+  font-family: var(--font-sans);
+}
+
+body {
+  font-family: var(--font-sans);
+  font-size: 10.5pt;
+  line-height: 1.7;
+  color: var(--color-text);
+  /* 讓中英文間距自然一點 */
+  text-spacing: auto;
+  /* CJK 排版斷行優化 */
+  word-break: break-word;
+  overflow-wrap: break-word;
+  hanging-punctuation: allow-end;
+}
+
+
+/* ---------- 3. Break control ---------- */
+
+/* 段落避免孤行 / 寡行 */
+p {
+  orphans: 3;
+  widows: 3;
+  margin: 0.6em 0;
+}
+
+/* 大章節（# H1）各自開新頁，並把標題寫進 running header 變數
+ *
+ * 踩坑紀錄（2026-04-21）：vivliostyle 用 vfm 把 markdown 轉成帶
+ * <section class="level1"> wrapper 的 HTML。也就是每個 H1 都在自己的
+ * section 裡，每個 H1 都是該 section 的 first-of-type。
+ * 所以不能用 `h1:first-of-type { break-before: auto }` 來豁免首頁
+ * ——那會把「所有 H1」都豁免掉！
+ *
+ * 正確做法：用 section:first-of-type > h1 精確指向「body 中的第一個
+ * section 裡的那顆 h1」。
+ */
+h1 {
+  break-before: page;
+  page-break-before: always;
+  string-set: chapter-title content();
+}
+
+/* 第一個 section 的 h1（封面標題）不要 break-before，否則會多一頁空白
+ * 同時支援 vfm（<section class="level1">）和純 markdown 輸出 */
+body > section:first-of-type > h1,
+body > h1:first-child {
+  break-before: auto;
+  page-break-before: auto;
+}
+
+/* 標題不要和內文脫離 */
+h1, h2, h3, h4, h5, h6 {
+  break-after: avoid;
+  page-break-after: avoid;
+}
+
+/* 區塊型元素避免被切半 */
+table, pre, blockquote, figure {
+  break-inside: avoid;
+  page-break-inside: avoid;
+}
+
+/* 表列 tr 儘量不被切半 */
+tr {
+  break-inside: avoid;
+  page-break-inside: avoid;
+}
+
+
+/* ---------- 4. Components ---------- */
+
+/* Headings */
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-sans);
+  font-weight: 700;
+  color: #111;
+  line-height: 1.35;
+}
+
+h1 {
+  font-size: 22pt;
+  margin: 0 0 0.8em;
+  padding-bottom: 0.3em;
+  border-bottom: 2px solid var(--color-accent);
+}
+
+h2 {
+  font-size: 16pt;
+  margin: 1.4em 0 0.6em;
+  padding-bottom: 0.2em;
+  border-bottom: 1px solid var(--color-border-light);
+}
+
+h3 {
+  font-size: 13pt;
+  margin: 1.2em 0 0.5em;
+  color: var(--color-accent);
+}
+
+h4 {
+  font-size: 11.5pt;
+  margin: 1em 0 0.4em;
+}
+
+h5, h6 {
+  font-size: 10.5pt;
+  margin: 0.8em 0 0.3em;
+}
+
+
+/* Tables */
+table {
+  border-collapse: collapse;
+  width: 100%;
+  margin: 1em 0;
+  font-size: 9.5pt;
+  /* 長表格跨頁時 thead 重複 —— 關鍵！ */
+}
+
+/* display: table-header-group 讓 Chromium / Vivliostyle 在跨頁時
+ * 於每頁頂端重印 thead，這是 md-to-pdf 做不好的地方 */
+thead {
+  display: table-header-group;
+}
+
+tfoot {
+  display: table-footer-group;
+}
+
+th, td {
+  border: 1px solid var(--color-border);
+  padding: 6px 10px;
+  text-align: left;
+  vertical-align: top;
+}
+
+th {
+  background: var(--color-bg-subtle);
+  font-weight: 600;
+}
+
+/* 表格內的 code 字級下調防止撐爆 cell */
+td code, th code {
+  font-size: 0.9em;
+}
+
+
+/* Code */
+code {
+  font-family: var(--font-mono);
+  background: var(--color-bg-code);
+  padding: 1px 5px;
+  border-radius: 3px;
+  font-size: 0.9em;
+}
+
+pre {
+  font-family: var(--font-mono);
+  background: #fafafa;
+  border: 1px solid var(--color-border-light);
+  border-radius: 4px;
+  padding: 10px 14px;
+  margin: 1em 0;
+  font-size: 9pt;
+  line-height: 1.5;
+  /* 長行自動換行，避免切出頁面 */
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+}
+
+pre code {
+  background: transparent;
+  padding: 0;
+  border-radius: 0;
+  font-size: inherit;
+}
+
+
+/* Blockquote */
+blockquote {
+  border-left: 4px solid var(--color-accent);
+  margin: 1em 0;
+  padding: 0.6em 1em;
+  color: var(--color-muted);
+  background: #f9fafc;
+  font-style: normal;
+}
+
+blockquote p {
+  margin: 0.3em 0;
+}
+
+blockquote p:first-child { margin-top: 0; }
+blockquote p:last-child  { margin-bottom: 0; }
+
+
+/* Lists */
+ul, ol {
+  margin: 0.5em 0;
+  padding-left: 1.8em;
+}
+
+li {
+  margin: 0.2em 0;
+}
+
+li > ul, li > ol {
+  margin: 0.2em 0;
+}
+
+
+/* Links — 印刷友好：底線保留、顏色穩重 */
+a {
+  color: var(--color-accent);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+
+/* Horizontal rule */
+hr {
+  border: none;
+  border-top: 1px solid var(--color-border-light);
+  margin: 1.8em 0;
+}
+
+
+/* Images 不溢出頁面 */
+img {
+  max-width: 100%;
+  height: auto;
+}
+
+
+/* Strong / em */
+strong {
+  font-weight: 700;
+  color: #000;
+}
+
+em {
+  font-style: italic;
+}
+
+
+/* ---------- Emoji rendering hint ----------
+ * Chromium 對彩色 emoji 在 PDF 輸出有已知限制
+ * （chromium issue #921585）。透過 font stack 讓
+ * "Apple Color Emoji" 優先被挑到，macOS 上實測可以彩色輸出。
+ * 若未來在 Linux CI 上執行，需額外安裝 Noto Color Emoji
+ * 並且 fontconfig 要找得到。
+ * -------------------------------------------- */
