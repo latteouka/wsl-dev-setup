@@ -89,7 +89,7 @@ if (-not $wslInstalled) {
 # Test if WSL is actually ready (not just installed)
 $wslReady = $false
 try {
-    $testOutput = wsl echo "WSL_READY" 2>&1
+    $testOutput = wsl -d Ubuntu -- echo "WSL_READY" 2>&1
     if ($testOutput -match "WSL_READY") {
         $wslReady = $true
     }
@@ -136,7 +136,7 @@ pause
         # Re-test after user completes Ubuntu setup
         $wslReady = $false
         try {
-            $testOutput = wsl echo "WSL_READY" 2>&1
+            $testOutput = wsl -d Ubuntu -- echo "WSL_READY" 2>&1
             if ($testOutput -match "WSL_READY") {
                 $wslReady = $true
             }
