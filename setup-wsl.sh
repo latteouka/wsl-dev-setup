@@ -140,9 +140,10 @@ if [ -x "$FISH_PATH" ]; then
     "$FISH_PATH" -c 'fisher update'
     success "fisher plugins installed"
 
-    # Configure tide: single-line, no extra blank line before prompt
-    "$FISH_PATH" -c 'set -U tide_left_prompt_items os context pwd git character'
+    # Configure tide: single-line, compact, no extra spaces
+    "$FISH_PATH" -c 'set -U tide_left_prompt_items context pwd git character'
     "$FISH_PATH" -c 'set -U tide_prompt_add_newline_before false'
+    "$FISH_PATH" -c 'set -U tide_left_prompt_suffix ""'
     success "tide configured (single-line, compact)"
 fi
 
