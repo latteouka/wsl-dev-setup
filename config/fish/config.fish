@@ -2,18 +2,26 @@
 # Adapted from macOS dotfiles — removed Homebrew / macOS-specific paths
 
 function fish_greeting
-    echo ' ╭─────────────────────────────────────╮'
-    echo ' │  Dev Environment Ready              │'
-    echo ' ├─────────────────────────────────────┤'
-    echo ' │  cd <dir>     進入目錄              │'
-    echo ' │  mkdir <name> 建立目錄              │'
-    echo ' │  cl           啟動 Claude Code      │'
-    echo ' │  clr          恢復上次 Claude 對話  │'
-    echo ' │  ll           列出檔案（詳細）      │'
-    echo ' │  z <keyword>  快速跳轉目錄          │'
-    echo ' │  Ctrl+R       搜尋歷史指令          │'
-    echo ' │  tmux         開啟多視窗終端        │'
-    echo ' ╰─────────────────────────────────────╯'
+    set -l c (set_color cyan)
+    set -l g (set_color green)
+    set -l y (set_color yellow)
+    set -l m (set_color magenta)
+    set -l d (set_color brblack)
+    set -l r (set_color normal)
+    echo ""
+    echo " "$d"╭─────────────────────────────────────╮"$r
+    echo " "$d"│"$r"  "$g"Dev Environment Ready"$r"              "$d"│"$r
+    echo " "$d"├─────────────────────────────────────┤"$r
+    echo " "$d"│"$r"  "$c"cd"$r" <dir>     "$d"進入目錄"$r"              "$d"│"$r
+    echo " "$d"│"$r"  "$c"mkdir"$r" <name> "$d"建立目錄"$r"              "$d"│"$r
+    echo " "$d"│"$r"  "$y"cl"$r"           "$d"啟動 Claude Code"$r"      "$d"│"$r
+    echo " "$d"│"$r"  "$y"clr"$r"          "$d"恢復上次 Claude 對話"$r"  "$d"│"$r
+    echo " "$d"│"$r"  "$c"ll"$r"           "$d"列出檔案（詳細）"$r"      "$d"│"$r
+    echo " "$d"│"$r"  "$m"z"$r" <keyword>  "$d"快速跳轉目錄"$r"          "$d"│"$r
+    echo " "$d"│"$r"  "$m"Ctrl+R"$r"       "$d"搜尋歷史指令"$r"          "$d"│"$r
+    echo " "$d"│"$r"  "$c"tmux"$r"         "$d"開啟多視窗終端"$r"        "$d"│"$r
+    echo " "$d"╰─────────────────────────────────────╯"$r
+    echo ""
 end
 
 # Vim mode
