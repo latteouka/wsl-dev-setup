@@ -40,13 +40,13 @@ set -g fish_color_autosuggestion brblack
 set -g fish_color_valid_path --underline
 
 # Fisher 自動安裝與插件同步
-# 插件清單由 fish_plugins 管理，git pull 後會自動重新安裝
 if not functions -q fisher
-    echo "Installing fisher..."
+    and not set -q __fisher_installing
+    set -g __fisher_installing 1
+    echo "Installing fisher + plugins (one-time setup)..."
     curl -sL https://raw.githubusercontent.com/jorgebucaran/fisher/main/functions/fisher.fish | source
-    fisher install jorgebucaran/fisher
-    echo "Installing plugins from fish_plugins..."
     fisher update
+    set -e __fisher_installing
 end
 
 # aliases
