@@ -249,7 +249,8 @@ if (-not $wtSettingsPath) {
         # ── Set default profile to WSL Ubuntu ──
         if ($settings.profiles.PSObject.Properties.Match("list")) {
             $ubuntuProfile = $settings.profiles.list | Where-Object {
-                $_.name -match "Ubuntu" -or $_.source -eq "Windows.Terminal.Wsl"
+                ($_.PSObject.Properties.Match("name") -and $_.name -match "Ubuntu") -or
+                ($_.PSObject.Properties.Match("source") -and $_.source -eq "Windows.Terminal.Wsl")
             } | Select-Object -First 1
 
             if ($ubuntuProfile -and $ubuntuProfile.guid) {
