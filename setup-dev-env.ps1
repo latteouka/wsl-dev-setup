@@ -61,112 +61,57 @@ Write-Ok "Running as administrator"
 
 # ─── 2. Install WSL + Ubuntu ─────────────────────────────────────────────────
 
-Write-Step "Checking WSL installation..."
+Write-Step "Checking WSL + Ubuntu..."
 
-$wslInstalled = $false
-try {
-    $wslStatus = wsl --status 2>&1
-    if ($LASTEXITCODE -eq 0) {
-        $wslInstalled = $true
-    }
-} catch {
-    $wslInstalled = $false
-}
-
-# If WSL not installed at all, install it (enables WSL feature + may need reboot)
-if (-not $wslInstalled) {
-    Write-Step "Installing WSL..."
-    try {
-        wsl --install --no-distribution
-    } catch {
-        Write-Err "WSL install command failed: $_"
-        exit 1
-    }
-
-    # Check if reboot is needed
-    $wslReady = $false
-    try {
-        $testOutput = wsl --status 2>&1
-        if ($LASTEXITCODE -eq 0) { $wslReady = $true }
-    } catch {}
-
-    if (-not $wslReady) {
-        Write-Warn "WSL was just enabled and needs a reboot."
-
-        $desktopPath = [Environment]::GetFolderPath("Desktop")
-        $continueScript = Join-Path $desktopPath "continue-setup.cmd"
-        $selfPath = $MyInvocation.MyCommand.Definition
-
-        @"
-@echo off
-echo Resuming WSL Dev Environment Setup...
-powershell.exe -NoProfile -ExecutionPolicy Bypass -File "$selfPath"
-pause
-"@ | Set-Content -Path $continueScript -Encoding ASCII
-
-        Write-Ok "Created 'continue-setup.cmd' on your Desktop."
-        Write-Host ""
-        Write-Host "  Please:" -ForegroundColor Yellow
-        Write-Host "    1. Reboot your computer" -ForegroundColor Yellow
-        Write-Host "    2. Double-click 'continue-setup.cmd' on your Desktop" -ForegroundColor Yellow
-        Write-Host ""
-        Read-Host "  Press Enter to exit"
-        exit 0
-    }
-    Write-Ok "WSL enabled"
-}
-
-# Check if Ubuntu distro is installed
-Write-Step "Checking Ubuntu distro..."
-
-$ubuntuInstalled = $false
-$distroList = wsl --list --quiet 2>&1
-if ($distroList -match "Ubuntu") {
-    $ubuntuInstalled = $true
-}
-
-if (-not $ubuntuInstalled) {
-    Write-Step "Installing Ubuntu distro (this may take a few minutes)..."
-    wsl --install -d Ubuntu --no-launch
-    Write-Ok "Ubuntu distro installed"
-}
-
-# Check if Ubuntu is ready (has a user account)
-$wslReady = $false
+# Check if Ubuntu is already working
+$ubuntuReady = $false
 try {
     $testOutput = wsl -d Ubuntu -- echo "WSL_READY" 2>&1
     if ($testOutput -match "WSL_READY") {
-        $wslReady = $true
+        $ubuntuReady = $true
     }
 } catch {}
 
-if (-not $wslReady) {
-    Write-Warn "Ubuntu needs initial setup (create a user account)."
+if ($ubuntuReady) {
+    Write-Ok "WSL + Ubuntu already installed and ready"
+} else {
+    # Not ready — install WSL + Ubuntu (one command does everything on modern Windows)
+    Write-Step "Installing WSL + Ubuntu (this may take a few minutes)..."
     Write-Host ""
-    Write-Host "  Please:" -ForegroundColor Yellow
-    Write-Host "    1. Open Start Menu -> search 'Ubuntu' -> click to open" -ForegroundColor Yellow
-    Write-Host "    2. Create a username and password when prompted" -ForegroundColor Yellow
-    Write-Host "    3. Type 'exit' to close Ubuntu" -ForegroundColor Yellow
-    Write-Host "    4. Come back here and press Enter to continue" -ForegroundColor Yellow
+    Write-Host "  After installation, Ubuntu will open in a new window." -ForegroundColor Yellow
+    Write-Host "  Create your username and password there, then type 'exit'." -ForegroundColor Yellow
+    Write-Host "  Then come back here and press Enter." -ForegroundColor Yellow
     Write-Host ""
-    Read-Host "  Press Enter after completing Ubuntu setup"
 
-    # Re-test
+    wsl --install -d Ubuntu
+
+    Write-Host ""
+    Read-Host "  Press Enter after creating your Ubuntu account"
+
+    # Verify
+    $ubuntuReady = $false
     try {
         $testOutput = wsl -d Ubuntu -- echo "WSL_READY" 2>&1
         if ($testOutput -match "WSL_READY") {
-            $wslReady = $true
+            $ubuntuReady = $true
         }
     } catch {}
 
-    if (-not $wslReady) {
-        Write-Err "Ubuntu still not responding. Please re-run this script after completing Ubuntu setup."
+    if (-not $ubuntuReady) {
+        Write-Err "Cannot communicate with Ubuntu after install."
+        Write-Host ""
+        Write-Host "  If Ubuntu didn't open automatically:" -ForegroundColor Yellow
+        Write-Host "    1. Open Start Menu -> search 'Ubuntu' -> open it" -ForegroundColor Yellow
+        Write-Host "    2. Create username and password" -ForegroundColor Yellow
+        Write-Host "    3. Type 'exit'" -ForegroundColor Yellow
+        Write-Host "    4. Re-run this script" -ForegroundColor Yellow
+        Write-Host ""
         Read-Host "  Press Enter to exit"
         exit 1
     }
-}
 
-Write-Ok "WSL + Ubuntu ready"
+    Write-Ok "WSL + Ubuntu installed and ready"
+}
 
 # ─── 3. Install Hack Nerd Font ───────────────────────────────────────────────
 
@@ -345,7 +290,7 @@ if (-not $wtSettingsPath) {
 Write-Step "Pinning WSL home directory to Quick Access..."
 
 try {
-    $wslUsername = (wsl whoami 2>&1).Trim()
+    $wslUsername = (wsl -d Ubuntu -- whoami 2>&1).Trim()
     if ($LASTEXITCODE -ne 0 -or [string]::IsNullOrWhiteSpace($wslUsername)) {
         throw "Could not get WSL username"
     }
@@ -371,46 +316,22 @@ try {
 
 # ─── 6. Run Phase 2 (WSL Setup) ──────────────────────────────────────────────
 
-Write-Step "Preparing to run Phase 2 (WSL-side setup)..."
+Write-Step "Launching Phase 2 (WSL-side setup)..."
 
 $phase2Cmd = "curl -fsSL https://raw.githubusercontent.com/latteouka/wsl-dev-setup/main/setup-wsl.sh | bash"
 
-$ubuntuReady = $false
-try {
-    $readyCheck = wsl -d Ubuntu echo "READY" 2>&1
-    if ($readyCheck -match "READY") {
-        $ubuntuReady = $true
-    }
-} catch {
-    $ubuntuReady = $false
-}
+Write-Host ""
+Write-Host "  ── Entering WSL (Phase 2) ──" -ForegroundColor Cyan
+Write-Host ""
 
-if ($ubuntuReady) {
-    Write-Ok "Ubuntu is ready. Launching Phase 2..."
-    Write-Host ""
-    Write-Host "  ── Entering WSL (Phase 2) ──" -ForegroundColor Cyan
-    Write-Host ""
+wsl -d Ubuntu bash -c $phase2Cmd
 
-    # Run Phase 2 inside WSL — this is interactive (prompts for git name/email)
-    wsl -d Ubuntu bash -c $phase2Cmd
-
-    if ($LASTEXITCODE -eq 0) {
-        Write-Ok "Phase 2 completed successfully"
-    } else {
-        Write-Warn "Phase 2 exited with code $LASTEXITCODE"
-        Write-Warn "You can re-run manually inside WSL:"
-        Write-Host "    $phase2Cmd" -ForegroundColor White
-    }
+if ($LASTEXITCODE -eq 0) {
+    Write-Ok "Phase 2 completed successfully"
 } else {
-    Write-Warn "Ubuntu needs first-time user setup (username + password)."
-    Write-Host ""
-    Write-Host "  Please:" -ForegroundColor Yellow
-    Write-Host "    1. Open Windows Terminal (or run 'ubuntu' from Start)" -ForegroundColor Yellow
-    Write-Host "    2. Complete the initial Ubuntu setup (create user)" -ForegroundColor Yellow
-    Write-Host "    3. Then run this command inside WSL:" -ForegroundColor Yellow
-    Write-Host ""
+    Write-Warn "Phase 2 exited with code $LASTEXITCODE"
+    Write-Warn "You can re-run manually inside WSL:"
     Write-Host "    $phase2Cmd" -ForegroundColor White
-    Write-Host ""
 }
 
 # ─── 7. Cleanup ──────────────────────────────────────────────────────────────
@@ -428,17 +349,10 @@ if (Test-Path $continueScript) {
 
 Write-Host ""
 Write-Host " ╭───────────────────────────────────────────────────╮" -ForegroundColor Green
-Write-Host " │          Phase 1 Complete!                        │" -ForegroundColor Green
+Write-Host " │          Setup Complete!                           │" -ForegroundColor Green
 Write-Host " ├───────────────────────────────────────────────────┤" -ForegroundColor Green
 Write-Host " │                                                   │" -ForegroundColor Green
-Write-Host " │  What was done:                                   │" -ForegroundColor Green
-Write-Host " │    - WSL + Ubuntu installed                       │" -ForegroundColor Green
-Write-Host " │    - Hack Nerd Font installed                     │" -ForegroundColor Green
-Write-Host " │    - Windows Terminal configured (Tokyo Night)     │" -ForegroundColor Green
-Write-Host " │    - WSL home pinned to Quick Access              │" -ForegroundColor Green
-Write-Host " │                                                   │" -ForegroundColor Green
-Write-Host " │  If Phase 2 ran successfully, open a new          │" -ForegroundColor Green
-Write-Host " │  Windows Terminal window to start using WSL!      │" -ForegroundColor Green
+Write-Host " │  Open a new Windows Terminal window to start!     │" -ForegroundColor Green
 Write-Host " │                                                   │" -ForegroundColor Green
 Write-Host " ╰───────────────────────────────────────────────────╯" -ForegroundColor Green
 Write-Host ""
