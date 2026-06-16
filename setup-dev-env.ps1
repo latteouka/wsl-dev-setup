@@ -264,10 +264,11 @@ if (-not $wtSettingsPath) {
         if (-not $ubuntuProfile) {
             # Terminal hasn't discovered Ubuntu yet — add profile manually
             $newProfile = [PSCustomObject]@{
-                guid        = $ubuntuGuid
-                name        = "Ubuntu"
-                commandline = "wsl.exe -d Ubuntu"
-                hidden      = $false
+                guid              = $ubuntuGuid
+                name              = "Ubuntu"
+                commandline       = "wsl.exe -d Ubuntu"
+                startingDirectory = "~"
+                hidden            = $false
             }
             $profileList = [System.Collections.ArrayList]@($settings.profiles.list)
             $profileList.Add($newProfile) | Out-Null

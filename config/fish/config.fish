@@ -66,6 +66,11 @@ end
 
 set -gx EDITOR nvim
 
+# 確保起始目錄是家目錄（WSL 可能繼承 Windows 路徑）
+if string match -q '/mnt/*' (pwd)
+    cd ~
+end
+
 # PATH — WSL paths only
 set -gx PATH ~/.local/bin $PATH
 set -gx PATH ~/bin $PATH
