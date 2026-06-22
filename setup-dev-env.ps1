@@ -48,9 +48,7 @@ function Show-Banner {
 
 # ─── 1. Auto-Elevate to Admin ───────────────────────────────────────────────
 
-$isAdmin = ([Security.Principal.WindowsPrincipal] `
-    [Security.Principal.WindowsIdentity]::GetCurrent()
-).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
+$isAdmin = ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
 
 if (-not $isAdmin) {
     Write-Warn "Not running as administrator. Re-launching with elevation..."
