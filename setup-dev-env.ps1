@@ -155,7 +155,7 @@ if ($fontInstalled) {
         foreach ($ttf in $ttfFiles) {
             $fontsFolder.CopyHere($ttf.FullName, 0x10)  # 0x10 = overwrite silently
         }
-        Write-Ok "Hack Nerd Font installed ($($ttfFiles.Count) files)"
+        Write-Ok "Hack Nerd Font installed: $($ttfFiles.Count) files"
     } catch {
         Write-Err "Font installation failed: $_"
         Write-Warn "You can install manually from: $fontUrl"
@@ -328,7 +328,7 @@ Write-Step "Launching Phase 2 (WSL-side setup)..."
 
 # Download first, then execute — curl|bash breaks interactive prompts (stdin conflict)
 $phase2Url = "https://raw.githubusercontent.com/latteouka/wsl-dev-setup/main/setup-wsl.sh"
-$phase2Cmd = "curl -fsSL '$phase2Url' -o /tmp/wsl-setup.sh && bash /tmp/wsl-setup.sh"
+$phase2Cmd = "curl -fsSL '${phase2Url}' -o /tmp/wsl-setup.sh" + ' && bash /tmp/wsl-setup.sh'
 
 Write-Host ""
 Write-Host "  ── Entering WSL (Phase 2) ──" -ForegroundColor Cyan
