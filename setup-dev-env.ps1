@@ -12,11 +12,14 @@
       6. Run Phase 2 (setup-wsl.sh) inside WSL
 
     Usage (paste into PowerShell as Admin):
-      iwr -useb https://raw.githubusercontent.com/latteouka/wsl-dev-setup/main/setup-dev-env.ps1 -OutFile $HOME\setup.ps1; powershell -ExecutionPolicy Bypass -File $HOME\setup.ps1
+      [Net.ServicePointManager]::SecurityProtocol=[Net.SecurityProtocolType]::Tls12; iwr -useb https://raw.githubusercontent.com/latteouka/wsl-dev-setup/main/setup-dev-env.ps1 -OutFile $HOME\setup.ps1; powershell -ExecutionPolicy Bypass -File $HOME\setup.ps1
 #>
 
 Set-StrictMode -Version Latest
 $ErrorActionPreference = "Stop"
+
+# Force TLS 1.2+ — Windows PowerShell 5.1 defaults to TLS 1.0 which GitHub rejects
+[Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
 
 # ─── Output Helpers ──────────────────────────────────────────────────────────
 
@@ -96,12 +99,12 @@ if ($ubuntuReady) {
         $continueScript = Join-Path $desktopPath "continue-setup.cmd"
         $selfPath = $MyInvocation.MyCommand.Definition
 
-        @"
-@echo off
-echo Resuming WSL Dev Environment Setup...
-powershell.exe -NoProfile -ExecutionPolicy Bypass -File "$selfPath"
-pause
-"@ | Set-Content -Path $continueScript -Encoding ASCII
+        @(
+            "@echo off",
+            "echo Resuming WSL Dev Environment Setup...",
+            "powershell.exe -NoProfile -ExecutionPolicy Bypass -File `"$selfPath`"",
+            "pause"
+        ) | Set-Content -Path $continueScript -Encoding ASCII
 
         Write-Ok "Created 'continue-setup.cmd' on your Desktop."
         Write-Host ""
@@ -138,7 +141,6 @@ if ($fontInstalled) {
     $zipPath = Join-Path $env:TEMP "Hack.zip"
 
     try {
-        [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
         Invoke-WebRequest -Uri $fontUrl -OutFile $zipPath -UseBasicParsing
 
         Write-Step "Extracting fonts..."

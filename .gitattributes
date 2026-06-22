@@ -1,0 +1,6 @@
+# PowerShell scripts must use CRLF — Windows PowerShell 5.1 here-string
+# parsing breaks with LF-only line endings.
+*.ps1 text eol=crlf
+
+# Shell scripts stay LF
+*.sh text eol=lf
